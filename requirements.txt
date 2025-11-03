@@ -3,8 +3,8 @@ numpy
 scikit-learn
 transformers
 torch
+textblob
 sentencepiece
 streamlit
 python-dateutil
 geopy
-scikit-learn
