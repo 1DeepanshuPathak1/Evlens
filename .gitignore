@@ -30,6 +30,8 @@ dist-ssr/
 .env.production
 .env.development
 .env.*
+# Allow .python-version for deployment
+!.python-version
 
 # IDE
 .vscode/
