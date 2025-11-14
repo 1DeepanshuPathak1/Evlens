@@ -63,12 +63,16 @@ git push -u origin main
 4. **Configure**:
    - Name: `event-review-summarizer-backend`
    - Environment: `Python 3`
+   - **Python Version**: `3.12.0` (IMPORTANT: Render defaults to 3.13 which is incompatible with pandas 2.1.3)
    - Build Command: `pip install -r requirements.txt`
    - Start Command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
    - Root Directory: `backend`
 5. **Add Environment Variables**:
    - `SECRET_KEY`: Your secret key
+   - `ALLOWED_ORIGINS`: Your frontend URL (add after frontend deployment)
 6. **Deploy**
+
+**Note**: The `backend/runtime.txt` file specifies Python 3.12.0. Render should auto-detect this, but you can also manually set it in the dashboard.
 
 #### Option C: Fly.io
 
