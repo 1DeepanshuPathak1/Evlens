@@ -24,12 +24,21 @@ def get_summarizer():
     global _summarizer
     if _summarizer is None:
         logger.info("Loading summarization model...")
-        _summarizer = pipeline(
-            "summarization",
-            model="google/flan-t5-base",
-            device=-1  # Use CPU (-1) or GPU (0, 1, etc.)
-        )
-        logger.info("Model loaded successfully")
+        try:
+            # Use a smaller, more memory-efficient model for Render free tier
+            # facebook/bart-large-cnn is too large, using t5-small instead
+            _summarizer = pipeline(
+                "summarization",
+                model="t5-small",  # Much smaller model (~60MB vs 500MB)
+                device=-1,  # Use CPU (-1) or GPU (0, 1, etc.)
+                model_kwargs={"torch_dtype": "float16"} if hasattr(__import__("torch"), "float16") else {}
+            )
+            logger.info("Model loaded successfully")
+        except Exception as e:
+            logger.error(f"Error loading model: {e}")
+            # Fallback: return None and handle gracefully
+            logger.warning("Model loading failed, will use fallback summarization")
+            _summarizer = None
     return _summarizer
 
 
@@ -135,28 +144,7 @@ def generate_summary_improved(report: Dict[str, Any]) -> Dict[str, Any]:
             # Take first 2500 and last 2500 chars to preserve context
             combined_text = combined_text[:2500] + " " + combined_text[-2500:]
         
-        # Generate summary using the model
-        summarizer = get_summarizer()
-        
-        # Better prompt for event review summarization
-        input_text = f"Summarize the following event reviews: {combined_text}"
-        
-        try:
-            raw_summary = summarizer(
-                input_text,
-                max_length=150,
-                min_length=40,
-                do_sample=False,
-                truncation=True
-            )
-            summary_text = raw_summary[0]["summary_text"].strip()
-        except Exception as e:
-            logger.error(f"Error in summarization: {e}")
-            # Fallback: create a simple summary
-            summary_text = f"Analyzed {n_reviews} event reviews. " + \
-                          f"Average review length: {text_data.get('avg_length_words', 0):.1f} words."
-        
-        # Improved Sentiment Analysis
+        # Improved Sentiment Analysis (do this first for fallback)
         sentiments = []
         sentiment_scores = []
         
@@ -213,6 +201,39 @@ def generate_summary_improved(report: Dict[str, Any]) -> Dict[str, Any]:
             "average_sentiment_score": round(avg_sentiment, 3),
             "total_reviews": n_reviews
         }
+        
+        # Generate summary using the model
+        summarizer = get_summarizer()
+        
+        # Better prompt for event review summarization
+        input_text = f"Summarize the following event reviews: {combined_text}"
+        
+        try:
+            if summarizer is not None:
+                raw_summary = summarizer(
+                    input_text,
+                    max_length=150,
+                    min_length=40,
+                    do_sample=False,
+                    truncation=True
+                )
+                summary_text = raw_summary[0]["summary_text"].strip()
+            else:
+                # Fallback if model not loaded
+                raise Exception("Model not available")
+        except Exception as e:
+            logger.error(f"Error in summarization: {e}")
+            # Fallback: create a comprehensive summary without ML model
+            if pos > neg:
+                sentiment_desc = "predominantly positive"
+            elif neg > pos:
+                sentiment_desc = "predominantly negative"
+            else:
+                sentiment_desc = "mixed"
+            
+            summary_text = f"Analyzed {n_reviews} event reviews with {sentiment_desc} sentiment. " + \
+                          f"Average review length: {text_data.get('avg_length_words', 0):.1f} words. " + \
+                          f"Key themes include: {', '.join(key_insights[:3]) if key_insights else 'general feedback'}."
         
         return {
             "summary": summary_text,
