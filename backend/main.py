@@ -30,17 +30,25 @@ app = FastAPI(
 
 # CORS middleware
 # Get allowed origins from environment variable or use defaults
-allowed_origins = os.getenv(
+allowed_origins_str = os.getenv(
     "ALLOWED_ORIGINS",
     "http://localhost:3000,http://localhost:5173"
-).split(",")
+)
+# Split by comma and strip whitespace and trailing slashes
+allowed_origins = [
+    origin.strip().rstrip('/') for origin in allowed_origins_str.split(",") if origin.strip()
+]
+
+# Log CORS configuration for debugging
+print(f"CORS Allowed Origins: {allowed_origins}")
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS", "HEAD", "PATCH"],
     allow_headers=["*"],
+    expose_headers=["*"],
 )
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login")
@@ -57,6 +65,11 @@ def get_db():
 @app.get("/")
 async def root():
     return {"message": "Event Review Summarizer API", "status": "running"}
+
+@app.options("/{full_path:path}")
+async def options_handler(full_path: str):
+    """Handle OPTIONS requests for CORS preflight"""
+    return {"message": "OK"}
 
 
 @app.post("/api/auth/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)

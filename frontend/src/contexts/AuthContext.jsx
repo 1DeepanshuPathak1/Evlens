@@ -2,7 +2,8 @@ import React, { createContext, useState, useEffect, useContext } from 'react'
 import axios from 'axios'
 
 // Use environment variable for API URL, fallback to localhost for development
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+// Remove trailing slash if present
+const API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/$/, '')
 
 // Configure axios base URL
 axios.defaults.baseURL = API_URL
