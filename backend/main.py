@@ -18,6 +18,9 @@ from models import User
 from schemas import UserCreate, UserResponse, Token, AnalysisResponse
 from auth import get_current_user, get_password_hash, verify_password, create_access_token
 from ml_service import analyze_csv_file, generate_summary_improved
+import logging
+
+logger = logging.getLogger(__name__)
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -136,6 +139,9 @@ async def analyze_csv(
     db: Session = Depends(get_db)
 ):
     """Upload CSV file and generate event summary"""
+    import asyncio
+    from concurrent.futures import ThreadPoolExecutor
+    
     if not file.filename.endswith('.csv'):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -152,22 +158,49 @@ async def analyze_csv(
         shutil.copyfileobj(file.file, buffer)
     
     try:
-        # Analyze CSV
-        report = analyze_csv_file(file_path)
-        summary = generate_summary_improved(report)
+        # Run analysis in thread pool to avoid blocking
+        # This prevents timeout issues with long-running ML operations
+        loop = asyncio.get_event_loop()
+        executor = ThreadPoolExecutor(max_workers=1)
+        
+        # Run analysis with timeout (5 minutes)
+        try:
+            report = await asyncio.wait_for(
+                loop.run_in_executor(executor, analyze_csv_file, file_path),
+                timeout=300.0  # 5 minutes timeout
+            )
+            summary = await asyncio.wait_for(
+                loop.run_in_executor(executor, generate_summary_improved, report),
+                timeout=120.0  # 2 minutes timeout for summary
+            )
+        except asyncio.TimeoutError:
+            # Clean up file on timeout
+            if os.path.exists(file_path):
+                os.remove(file_path)
+            raise HTTPException(
+                status_code=status.HTTP_504_GATEWAY_TIMEOUT,
+                detail="Analysis took too long. Please try with a smaller CSV file or try again later."
+            )
+        finally:
+            executor.shutdown(wait=False)
         
         # Clean up file
-        os.remove(file_path)
+        if os.path.exists(file_path):
+            os.remove(file_path)
         
         return AnalysisResponse(
             report=report,
             summary=summary,
             message="Analysis completed successfully"
         )
+    except HTTPException:
+        # Re-raise HTTP exceptions
+        raise
     except Exception as e:
         # Clean up file on error
         if os.path.exists(file_path):
             os.remove(file_path)
+        logger.error(f"Error processing file: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error processing file: {str(e)}"
