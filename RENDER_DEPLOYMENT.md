@@ -24,6 +24,8 @@ git push origin main
 
 ## Part 2: Deploy Backend on Render
 
+> **Note**: The ML model is already integrated into the backend. No separate deployment needed! See [ML_DEPLOYMENT.md](./ML_DEPLOYMENT.md) for details.
+
 ### Step 1: Create Render Account
 
 1. Go to [render.com](https://render.com)
@@ -44,10 +46,15 @@ git push origin main
 - **Region**: Choose closest to you
 - **Branch**: `main` (or your default branch)
 - **Root Directory**: `backend` ⚠️ **CRITICAL**
-- **Build Command**: `pip install -r requirements.txt`
+- **Build Command**: `python copy_ml_files.py && pip install -r requirements.txt`
 - **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
 
 **OR** - Render will auto-detect from `backend/render.yaml` if you use "Apply Render YAML"
+
+⚠️ **Important**: 
+- Root Directory must be `backend`
+- The build command automatically copies `ML/src/` files into `backend/ml_src/` during deployment
+- This ensures ML code is accessible even when root directory is set to `backend`
 
 ### Step 4: Add Environment Variables
 
@@ -55,6 +62,8 @@ git push origin main
 
 - `SECRET_KEY`: Click "Generate" or use a random string (e.g., `openssl rand -hex 32`)
 - `ALLOWED_ORIGINS`: Leave empty for now (add after frontend deployment)
+
+> **ML Model Note**: The ML model will download automatically on first use (~500MB, takes 1-2 minutes). This is normal!
 
 ### Step 5: Deploy
 
@@ -149,6 +158,9 @@ git push origin main
 **"Module not found" errors**
 - ✅ Check that all dependencies are in `backend/requirements.txt`
 - ✅ Check build logs for missing packages
+- ✅ Verify `ML/src/` directory exists in repository (not in `.gitignore`)
+- ✅ Check build logs for `copy_ml_files.py` - should show files copied
+- ✅ Verify `backend/ml_src/` directory exists after build
 
 **CORS errors**
 - ✅ Update `ALLOWED_ORIGINS` in backend environment variables
@@ -158,6 +170,12 @@ git push origin main
 **Python version issues**
 - ✅ Render should auto-detect `backend/runtime.txt` (Python 3.12.0)
 - ✅ Or manually set Python version to `3.12.0` in Render dashboard
+
+**ML Model Issues**
+- ✅ First request may take 1-2 minutes (model downloading from Hugging Face)
+- ✅ Check Render logs for model download progress
+- ✅ Verify enough disk space (~500MB for model)
+- ✅ See [ML_DEPLOYMENT.md](./ML_DEPLOYMENT.md) for detailed ML troubleshooting
 
 ### Frontend Issues
 

@@ -3,7 +3,7 @@ services:
     name: event-review-summarizer-backend
     env: python
     pythonVersion: 3.12.0
-    buildCommand: pip install -r requirements.txt
+    buildCommand: python copy_ml_files.py && pip install -r requirements.txt
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: SECRET_KEY

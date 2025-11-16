@@ -129,6 +129,8 @@ Sample CSV files are included in the repository root.
 2. **Frontend**: Create Static Site → Root Directory: `frontend`
 3. **Connect**: Set `VITE_API_URL` in frontend and `ALLOWED_ORIGINS` in backend
 
+> **🤖 ML Model**: Already integrated into backend! No separate deployment needed. See [ML_DEPLOYMENT.md](./ML_DEPLOYMENT.md) for details.
+
 ## 📝 API Endpoints
 
 ### Authentication

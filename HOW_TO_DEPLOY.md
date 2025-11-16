@@ -22,8 +22,10 @@
    - **Name**: `event-review-summarizer-backend`
    - **Root Directory**: `backend` ⚠️ **IMPORTANT**
    - **Environment**: `Python 3`
-   - **Build Command**: `pip install -r requirements.txt`
+   - **Build Command**: `python copy_ml_files.py && pip install -r requirements.txt`
    - **Start Command**: `uvicorn main:app --host 0.0.0.0 --port $PORT`
+   
+   > **Note**: The build command copies `ML/src/` files into `backend/ml_src/` so they're accessible during deployment.
 5. **Environment Variables:**
    - `SECRET_KEY`: Generate a random string
    - `ALLOWED_ORIGINS`: Leave empty for now
@@ -86,11 +88,11 @@ If everything works, you're done! 🎉
 
 ---
 
-## 📚 Detailed Guide
+## 📚 Detailed Guides
 
-For more detailed instructions, see [RENDER_DEPLOYMENT.md](./RENDER_DEPLOYMENT.md)
-
-For quick reference, see [QUICK_DEPLOY_RENDER.md](./QUICK_DEPLOY_RENDER.md)
+- **Full Guide**: [RENDER_DEPLOYMENT.md](./RENDER_DEPLOYMENT.md)
+- **Quick Reference**: [QUICK_DEPLOY_RENDER.md](./QUICK_DEPLOY_RENDER.md)
+- **ML Model Info**: [ML_DEPLOYMENT.md](./ML_DEPLOYMENT.md) - Learn about ML model integration
 
 ---
 

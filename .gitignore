@@ -66,6 +66,7 @@ backend/venv/
 backend/__pycache__/
 backend/uploads/
 backend/event_summarizer.db
+backend/ml_src/  # Generated during build, don't commit
 
 # Frontend
 frontend/node_modules/

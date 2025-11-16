@@ -37,16 +37,38 @@ def analyze_csv_file(csv_path: str) -> Dict[str, Any]:
     """Analyze CSV file and return report"""
     import sys
     import os
-    # Add ML/src directory to path to import analyzer module
+    # Try multiple paths to find ML/src directory
     current_dir = os.path.dirname(os.path.abspath(__file__))  # backend/
     root_dir = os.path.dirname(current_dir)  # project root
-    ml_src_dir = os.path.join(root_dir, "ML", "src")
+    
+    # Try paths in order of preference:
+    # 1. backend/ml_src/ (copied during build)
+    # 2. ../ML/src/ (if root directory is not set to backend)
+    # 3. ML/src/ (if running from project root)
+    possible_paths = [
+        os.path.join(current_dir, "ml_src"),  # backend/ml_src/
+        os.path.join(root_dir, "ML", "src"),  # ../ML/src/
+        os.path.join("ML", "src"),  # ML/src/ (from root)
+    ]
+    
+    ml_src_dir = None
+    for path in possible_paths:
+        analyzer_path = os.path.join(path, "analyzer.py")
+        if os.path.exists(analyzer_path):
+            ml_src_dir = path
+            break
+    
+    if ml_src_dir is None:
+        raise ImportError(
+            f"Could not find ML/src/analyzer.py. Tried: {possible_paths}. "
+            "Make sure ML/src directory is accessible."
+        )
     
     if ml_src_dir not in sys.path:
         sys.path.insert(0, ml_src_dir)
     
     try:
-        # Import directly from ML/src/analyzer.py
+        # Import directly from analyzer.py
         from analyzer import analyze_csv
     except ImportError as e:
         logger.error(f"Failed to import analyzer: {e}")
