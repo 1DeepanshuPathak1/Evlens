@@ -120,13 +120,14 @@ Sample CSV files are included in the repository root.
 
 ## 🚀 Deployment
 
-### Quick Deploy
-- **Frontend**: [Vercel](https://vercel.com) - Free, optimized for React
-- **Backend**: [Railway](https://railway.app) - Free tier, Python support
+### Deploy on Render (Both Frontend & Backend)
 
-**See [DEPLOYMENT_GUIDE.md](./DEPLOYMENT_GUIDE.md) for step-by-step instructions.**
+**See [RENDER_DEPLOYMENT.md](./RENDER_DEPLOYMENT.md) for complete step-by-step instructions.**
 
-**See [CONNECTION_GUIDE.md](./CONNECTION_GUIDE.md) for connecting frontend and backend.**
+**Quick Steps:**
+1. **Backend**: Create Web Service → Root Directory: `backend`
+2. **Frontend**: Create Static Site → Root Directory: `frontend`
+3. **Connect**: Set `VITE_API_URL` in frontend and `ALLOWED_ORIGINS` in backend
 
 ## 📝 API Endpoints
 
